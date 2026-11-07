@@ -30,19 +30,13 @@
   dialog::backdrop { background: rgba(15,23,42,.55); backdrop-filter: blur(4px); }
   h3 { margin: 0 0 4px; font-size: 20px; letter-spacing: -.01em; }
   .hint { margin: 0 0 18px; font-size: 14px; color: #64748b; opacity: 1; font-weight: 400; }
-  .label { display: block; margin: 16px 0 6px; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .06em; }
-  .presets { display: flex; gap: 8px; flex-wrap: wrap; }
-  .presets button { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f1f5f9; border: 1px solid transparent; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 13px; font-family: inherit; color: #0f172a; transition: background .15s; }
+  .presets { display: flex; flex-direction: column; gap: 10px; }
+  .presets button { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; text-align: left; background: #f8fafc; border: 2px solid transparent; border-radius: 14px; cursor: pointer; font-family: inherit; color: #0f172a; transition: background .15s; }
+  .presets b { display: block; font-size: 16px; }
+  .presets small { display: block; font-size: 13px; color: #64748b; margin-top: 2px; }
   .presets button:hover { background: #e2e8f0; }
   .presets button.active { border-color: #0f172a; background: #fff; }
-  .dot { width: 12px; height: 12px; border-radius: 50%; }
-  input[type=text] { width: 100%; padding: 11px 13px; font-weight: 500; font-size: 16px; font-family: inherit; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; color: inherit; outline: none; }
-  input[type=text]:focus { border-color: #0f172a; background: #fff; }
-  .colorrow { display: flex; align-items: center; gap: 12px; }
-  input[type=color] { width: 48px; height: 48px; padding: 0; border: 0; border-radius: 12px; background: none; cursor: pointer; }
-  input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
-  input[type=color]::-webkit-color-swatch { border: 0; border-radius: 12px; }
-  #hex { font: 500 14px ui-monospace, Menlo, monospace; color: #64748b; }
+  .dot { flex: none; width: 22px; height: 22px; border-radius: 50%; }
   .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 26px; }
   .row button { padding: 11px 20px; font-weight: 600; font-size: 15px; font-family: inherit; border-radius: 10px; cursor: pointer; border: 0; }
   #cancel { background: #f1f5f9; color: #0f172a; }
@@ -61,19 +55,12 @@
   <dialog id="dlg">
     <form method="dialog" id="form">
       <h3>Update status</h3>
-      <p class="hint">Visible to everyone as soon as you save.</p>
-      <span class="label">Presets</span>
+      <p class="hint">Pick a status. Everyone sees it as soon as you save.</p>
       <div class="presets" id="presets"></div>
-      <span class="label">Title</span>
-      <input type="text" id="fTitle" maxlength="60" required>
-      <span class="label">Subtitle</span>
-      <input type="text" id="fSub" maxlength="200">
-      <span class="label">Color</span>
-      <div class="colorrow"><input type="color" id="fColor"><span id="hex"></span></div>
       <div id="err"></div>
       <div class="row">
         <button type="button" id="cancel">Cancel</button>
-        <button type="submit" id="save">Save</button>
+        <button type="submit" id="save" disabled>Save</button>
       </div>
     </form>
   </dialog>
@@ -122,28 +109,33 @@ sb.channel("status-changes")
   .on("postgres_changes", { event: "UPDATE", schema: "public", table: "status" }, (p) => render(p.new))
   .subscribe();
 
-// presets
+// presets (only these can be chosen from the UI)
+let selected = null;
 for (const p of PRESETS) {
   const b = document.createElement("button");
-  b.type = "button"; b.innerHTML = `<span class="dot" style="background:${p.color}"></span>${p.title}`;
-  b.onclick = () => { $("fTitle").value = p.title; $("fSub").value = p.subtitle; $("fColor").value = p.color; syncHex(); };
+  b.type = "button";
+  b.innerHTML = `<span class="dot" style="background:${p.color}"></span><span><b>${p.title}</b><small>${p.subtitle}</small></span>`;
+  b.onclick = () => {
+    selected = p;
+    for (const el of $("presets").children) el.classList.remove("active");
+    b.classList.add("active"); $("save").disabled = false;
+  };
   $("presets").appendChild(b);
 }
 
-const syncHex = () => { $("hex").textContent = $("fColor").value.toUpperCase(); };
-$("fColor").addEventListener("input", syncHex);
 $("editBtn").onclick = () => {
-  $("fTitle").value = current.title; $("fSub").value = current.subtitle || ""; $("fColor").value = current.color; syncHex();
-  $("err").textContent = ""; $("dlg").showModal();
+  selected = null; $("save").disabled = true; $("err").textContent = "";
+  for (const el of $("presets").children) el.classList.remove("active");
+  $("dlg").showModal();
 };
 $("cancel").onclick = () => $("dlg").close();
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (!selected) return;
   $("save").disabled = true;
-  const next = { title: $("fTitle").value.trim(), subtitle: $("fSub").value.trim(), color: $("fColor").value };
+  const next = { title: selected.title, subtitle: selected.subtitle, color: selected.color };
   const { error } = await sb.from("status").update({ ...next, updated_at: new Date().toISOString() }).eq("id", 1);
-  $("save").disabled = false;
-  if (error) { $("err").textContent = error.message; return; }
+  if (error) { $("err").textContent = error.message; $("save").disabled = false; return; }
   render(next); $("dlg").close();
 });
 
