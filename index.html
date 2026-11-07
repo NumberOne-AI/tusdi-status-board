@@ -39,7 +39,6 @@
   .presets button .tick { margin-left: auto; flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #cbd5e1; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 800; }
   .presets button.active .tick { background: var(--c); border-color: var(--c); }
   .presets button.active .tick::after { content: "\2713"; }
-  .live { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: #0f172a; color: #fff; font-size: 11px; font-weight: 700; vertical-align: middle; }
   .dot { flex: none; width: 22px; height: 22px; border-radius: 50%; }
   .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 26px; }
   .row button { padding: 11px 20px; font-weight: 600; font-size: 15px; font-family: inherit; border-radius: 10px; cursor: pointer; border: 0; }
@@ -123,18 +122,14 @@ for (const p of PRESETS) {
   b.onclick = () => {
     selected = p;
     for (const el of $("presets").children) el.classList.remove("active");
-    b.classList.add("active"); $("save").disabled = false;
+    b.classList.add("active"); $("save").disabled = (p.title === current.title);
   };
   $("presets").appendChild(b);
 }
 
 $("editBtn").onclick = () => {
   selected = null; $("save").disabled = true; $("err").textContent = "";
-  for (const el of $("presets").children) {
-    el.classList.remove("active");
-    el.querySelector(".live")?.remove();
-    if (el.dataset.title === current.title) el.querySelector("b").insertAdjacentHTML("beforeend", '<span class="live">LIVE</span>');
-  }
+  for (const el of $("presets").children) el.classList.toggle("active", el.dataset.title === current.title);
   $("dlg").showModal();
 };
 $("cancel").onclick = () => $("dlg").close();
