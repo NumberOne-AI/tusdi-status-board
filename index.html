@@ -35,7 +35,11 @@
   .presets b { display: block; font-size: 16px; }
   .presets small { display: block; font-size: 13px; color: #64748b; margin-top: 2px; }
   .presets button:hover { background: #e2e8f0; }
-  .presets button.active { border-color: #0f172a; background: #fff; }
+  .presets button.active { background: color-mix(in srgb, var(--c) 10%, #fff); border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
+  .presets button .tick { margin-left: auto; flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #cbd5e1; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 800; }
+  .presets button.active .tick { background: var(--c); border-color: var(--c); }
+  .presets button.active .tick::after { content: "¹3"; }
+  .live { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: #0f172a; color: #fff; font-size: 11px; font-weight: 700; vertical-align: middle; }
   .dot { flex: none; width: 22px; height: 22px; border-radius: 50%; }
   .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 26px; }
   .row button { padding: 11px 20px; font-weight: 600; font-size: 15px; font-family: inherit; border-radius: 10px; cursor: pointer; border: 0; }
@@ -114,7 +118,8 @@ let selected = null;
 for (const p of PRESETS) {
   const b = document.createElement("button");
   b.type = "button";
-  b.innerHTML = `<span class="dot" style="background:${p.color}"></span><span><b>${p.title}</b><small>${p.subtitle}</small></span>`;
+  b.innerHTML = `<span class="dot" style="background:${p.color}"></span><span><b>${p.title}</b><small>${p.subtitle}</small></span><span class="tick"></span>`;
+  b.style.setProperty("--c", p.color); b.dataset.title = p.title;
   b.onclick = () => {
     selected = p;
     for (const el of $("presets").children) el.classList.remove("active");
@@ -125,7 +130,11 @@ for (const p of PRESETS) {
 
 $("editBtn").onclick = () => {
   selected = null; $("save").disabled = true; $("err").textContent = "";
-  for (const el of $("presets").children) el.classList.remove("active");
+  for (const el of $("presets").children) {
+    el.classList.remove("active");
+    el.querySelector(".live")?.remove();
+    if (el.dataset.title === current.title) el.querySelector("b").insertAdjacentHTML("beforeend", '<span class="live">LIVE</span>');
+  }
   $("dlg").showModal();
 };
 $("cancel").onclick = () => $("dlg").close();
