@@ -1,4 +1,4 @@
-# Status Board
+# Tusdi Status Board
 
 One shared status (title, subtitle, color) shown full-screen, e.g. "Code Freeze". Anyone with the link can edit. No auth. Free: GitHub Pages + Supabase free tier.
 
@@ -6,8 +6,8 @@ One shared status (title, subtitle, color) shown full-screen, e.g. "Code Freeze"
 
 1. **Supabase**: create a free project, open SQL Editor, run [supabase.sql](supabase.sql).
 2. Copy Project URL and `anon` key (Project Settings > API) into the CONFIG block in [index.html](index.html).
-3. **GitHub**: create repo `status-board` under the org, push, then Settings > Pages > Deploy from branch `main` / root.
-4. Open `https://<org>.github.io/status-board/`.
+3. **GitHub**: create repo `tusdi-status-board` under the org, push, then Settings > Pages > Deploy from branch `main` / root.
+4. Open `https://<org>.github.io/tusdi-status-board/`.
 
 ## Notes
 
